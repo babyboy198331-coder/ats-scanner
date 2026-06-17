@@ -95,10 +95,10 @@ Return this exact JSON structure:
 {
   "score": <number 0-100>,
   "summary": "<2-3 sentence overall assessment>",
-  "matchedKeywords": ["keyword1", "keyword2", ...],
-  "missingKeywords": ["keyword1", "keyword2", ...],
-  "formatIssues": ["issue1", "issue2", ...],
-  "suggestions": ["suggestion1", "suggestion2", ...]
+  "matchedKeywords": ["keyword1", "keyword2", ...up to 12],
+  "missingKeywords": ["keyword1", "keyword2", ...up to 12],
+  "formatIssues": ["issue1", "issue2", ...up to 6],
+  "suggestions": ["suggestion1", "suggestion2", ...up to 6]
 }
 
 Scoring guide:
@@ -122,8 +122,9 @@ Suggestions should be actionable and specific to this resume/JD pair.
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 4096,
+            maxOutputTokens: 8192,
             responseMimeType: "application/json",
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       }
