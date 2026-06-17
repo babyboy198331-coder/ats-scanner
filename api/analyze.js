@@ -122,7 +122,8 @@ Suggestions should be actionable and specific to this resume/JD pair.
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 1500,
+            maxOutputTokens: 4096,
+            responseMimeType: "application/json",
           },
         }),
       }
@@ -135,11 +136,37 @@ Suggestions should be actionable and specific to this resume/JD pair.
     }
 
     const data = await response.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const candidate = data.candidates?.[0];
+    const raw = candidate?.content?.parts?.[0]?.text || "";
+    const finishReason = candidate?.finishReason;
 
-    // Strip any markdown fences if present
+    if (!raw) {
+      console.error("Gemini returned no content. finishReason:", finishReason);
+      return res.status(500).json({ error: "Failed to analyze resume. Please try again." });
+    }
+
+    // Strip any markdown fences if present, just in case
     const clean = raw.replace(/```json|```/g, "").trim();
-    const result = JSON.parse(clean);
+
+    let result;
+    try {
+      result = JSON.parse(clean);
+    } catch (parseErr) {
+      console.error(
+        "JSON parse failed. finishReason:",
+        finishReason,
+        "raw length:",
+        raw.length,
+        "raw:",
+        raw
+      );
+      if (finishReason === "MAX_TOKENS") {
+        return res.status(500).json({
+          error: "The analysis was too long to complete. Try shortening your resume or job description.",
+        });
+      }
+      return res.status(500).json({ error: "Failed to analyze resume. Please try again." });
+    }
 
     return res.status(200).json(result);
   } catch (err) {

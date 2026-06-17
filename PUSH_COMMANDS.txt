@@ -1,0 +1,3 @@
+git add .
+git commit -m "Fix Gemini JSON parsing errors (force JSON mode, raise token limit)"
+git push
