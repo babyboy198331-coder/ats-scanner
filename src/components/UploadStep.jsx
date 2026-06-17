@@ -26,14 +26,30 @@ export default function UploadStep({ onAnalyze, loading, error }) {
           const content = await page.getTextContent();
           text += content.items.map((item) => item.str).join(" ") + "\n";
         }
-        setResumeText(text.trim());
+        const trimmed = text.trim();
+        if (trimmed.length < 50) {
+          setPdfError(
+            "This PDF doesn't have enough extractable text (it may be a scanned image). Try pasting your resume as text instead."
+          );
+          setResumeText("");
+          setFileName("");
+          return;
+        }
+        setResumeText(trimmed);
         setFileName(file.name);
       } catch (err) {
         setPdfError("Could not read this PDF. Try pasting your resume as text instead.");
       }
     } else if (file.type === "text/plain") {
       const text = await file.text();
-      setResumeText(text.trim());
+      const trimmed = text.trim();
+      if (trimmed.length < 50) {
+        setPdfError("This file doesn't have enough text. Try pasting your resume as text instead.");
+        setResumeText("");
+        setFileName("");
+        return;
+      }
+      setResumeText(trimmed);
       setFileName(file.name);
     } else {
       setPdfError("Please upload a PDF or .txt file.");
