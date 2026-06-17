@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 
-const DAILY_LIMIT = 10;
+const DAILY_LIMIT = 15;
 
 function getFirestore() {
   if (!admin.apps.length) {
