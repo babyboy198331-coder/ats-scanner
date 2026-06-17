@@ -1,3 +1,57 @@
+import admin from "firebase-admin";
+
+const DAILY_LIMIT = 10;
+
+function getFirestore() {
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      }),
+    });
+  }
+  return admin.firestore();
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  return req.socket?.remoteAddress || "unknown";
+}
+
+async function checkAndIncrementRateLimit(ip) {
+  const db = getFirestore();
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const docId = `${ip}_${today}`;
+  const ref = db.collection("rateLimits").doc(docId);
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const currentCount = snap.exists ? snap.data().count || 0 : 0;
+
+    if (currentCount >= DAILY_LIMIT) {
+      return { allowed: false, count: currentCount };
+    }
+
+    tx.set(
+      ref,
+      {
+        count: currentCount + 1,
+        ip,
+        date: today,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return { allowed: true, count: currentCount + 1 };
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -12,6 +66,20 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured." });
+  }
+
+  try {
+    const ip = getClientIp(req);
+    const { allowed } = await checkAndIncrementRateLimit(ip);
+
+    if (!allowed) {
+      return res.status(429).json({
+        error: `Daily limit reached. You can analyze up to ${DAILY_LIMIT} resumes per day — try again tomorrow.`,
+      });
+    }
+  } catch (err) {
+    console.error("Rate limit check failed:", err);
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 
   const prompt = `

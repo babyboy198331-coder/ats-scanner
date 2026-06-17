@@ -11,8 +11,7 @@ export default function UploadStep({ onAnalyze, loading, error }) {
   const [pdfError, setPdfError] = useState("");
   const fileInputRef = useRef(null);
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+  const processFile = async (file) => {
     if (!file) return;
 
     setPdfError("");
@@ -41,6 +40,19 @@ export default function UploadStep({ onAnalyze, loading, error }) {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    await processFile(e.target.files[0]);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    await processFile(e.dataTransfer.files[0]);
+  };
+
   const handleSubmit = () => {
     if (!resumeText.trim() || !jobDescription.trim()) return;
     onAnalyze({ resumeText, jobDescription });
@@ -61,6 +73,8 @@ export default function UploadStep({ onAnalyze, loading, error }) {
           <div
             className={`drop-zone ${fileName ? "has-file" : ""}`}
             onClick={() => fileInputRef.current.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
           >
             {fileName ? (
               <>
