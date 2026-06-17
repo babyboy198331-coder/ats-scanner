@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import FixChatDrawer from "./FixChatDrawer";
 
 function ScoreRing({ score }) {
   const radius = 54;
@@ -51,19 +52,40 @@ function TagList({ items, variant }) {
   );
 }
 
-function SuggestionList({ items }) {
-  if (!items || items.length === 0) return <p className="empty-list">No suggestions</p>;
+function IssueRowList({ items, onFix }) {
+  if (!items || items.length === 0) return <p className="empty-list">None identified</p>;
   return (
-    <ul className="suggestion-list">
+    <ul className="issue-row-list">
       {items.map((item, i) => (
-        <li key={i}>{item}</li>
+        <li key={i} className="issue-row">
+          <span className="issue-row-text">{item}</span>
+          <button className="fix-btn" onClick={() => onFix(item)}>Fix this</button>
+        </li>
       ))}
     </ul>
   );
 }
 
-export default function ResultsView({ result, onReset }) {
+function SuggestionList({ items, onFix }) {
+  if (!items || items.length === 0) return <p className="empty-list">No suggestions</p>;
+  return (
+    <ul className="suggestion-list">
+      {items.map((item, i) => (
+        <li key={i} className="issue-row">
+          <span className="issue-row-text">{item}</span>
+          <button className="fix-btn" onClick={() => onFix(item)}>Fix this</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default function ResultsView({ result, inputs, onReset }) {
   const { score, summary, matchedKeywords, missingKeywords, formatIssues, suggestions } = result;
+  const [activeIssue, setActiveIssue] = useState(null);
+
+  const openFix = (issueType) => (issueText) => setActiveIssue({ issueType, issueText });
+  const closeFix = () => setActiveIssue(null);
 
   return (
     <div className="results-view">
@@ -99,7 +121,7 @@ export default function ResultsView({ result, onReset }) {
             Missing Keywords
             <span className="count">{missingKeywords?.length || 0}</span>
           </h3>
-          <TagList items={missingKeywords} variant="missing" />
+          <IssueRowList items={missingKeywords} onFix={openFix("missingKeyword")} />
         </div>
 
         {/* Format Issues */}
@@ -109,7 +131,7 @@ export default function ResultsView({ result, onReset }) {
             Format Issues
             <span className="count">{formatIssues?.length || 0}</span>
           </h3>
-          <TagList items={formatIssues} variant="format" />
+          <IssueRowList items={formatIssues} onFix={openFix("formatIssue")} />
         </div>
 
         {/* Suggestions */}
@@ -118,9 +140,19 @@ export default function ResultsView({ result, onReset }) {
             <span className="dot dot-blue" />
             Recommendations
           </h3>
-          <SuggestionList items={suggestions} />
+          <SuggestionList items={suggestions} onFix={openFix("suggestion")} />
         </div>
       </div>
+
+      {activeIssue && inputs && (
+        <FixChatDrawer
+          issueType={activeIssue.issueType}
+          issueText={activeIssue.issueText}
+          resumeText={inputs.resumeText}
+          jobDescription={inputs.jobDescription}
+          onClose={closeFix}
+        />
+      )}
     </div>
   );
 }

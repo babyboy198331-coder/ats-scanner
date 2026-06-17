@@ -7,6 +7,7 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [inputs, setInputs] = useState(null);
 
   const handleAnalyze = async ({ resumeText, jobDescription }) => {
     setLoading(true);
@@ -26,6 +27,7 @@ export default function App() {
         setError(data.error || "Something went wrong.");
       } else {
         setResult(data);
+        setInputs({ resumeText, jobDescription });
       }
     } catch (err) {
       setError("Network error. Please try again.");
@@ -36,6 +38,7 @@ export default function App() {
 
   const handleReset = () => {
     setResult(null);
+    setInputs(null);
     setError("");
   };
 
@@ -53,7 +56,7 @@ export default function App() {
 
       <main className="app-main">
         {result ? (
-          <ResultsView result={result} onReset={handleReset} />
+          <ResultsView result={result} inputs={inputs} onReset={handleReset} />
         ) : (
           <UploadStep onAnalyze={handleAnalyze} loading={loading} error={error} />
         )}
