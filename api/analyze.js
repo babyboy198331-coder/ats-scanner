@@ -1,7 +1,3 @@
-import { getClientIp, checkAndIncrementRateLimit } from "./_lib/rateLimit.js";
-
-const DAILY_LIMIT = 15;
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -16,23 +12,6 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured." });
-  }
-
-  try {
-    const ip = getClientIp(req);
-    const { allowed } = await checkAndIncrementRateLimit(ip, {
-      collection: "rateLimits",
-      limit: DAILY_LIMIT,
-    });
-
-    if (!allowed) {
-      return res.status(429).json({
-        error: `Daily limit reached. You can analyze up to ${DAILY_LIMIT} resumes per day — try again tomorrow.`,
-      });
-    }
-  } catch (err) {
-    console.error("Rate limit check failed:", err);
-    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 
   const prompt = `
