@@ -3,6 +3,7 @@ import React, { useState } from "react";
 export default function BulletRewritePreview({ resumeText, jobDescription }) {
   const [state, setState] = useState("idle"); // idle | loading | done | error
   const [data, setData] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const fetchRewrite = async () => {
     setState("loading");
@@ -14,12 +15,14 @@ export default function BulletRewritePreview({ resumeText, jobDescription }) {
       });
       const json = await res.json();
       if (!res.ok) {
+        setErrorMsg(json?.error || "Couldn't generate a rewrite. Try again in a moment.");
         setState("error");
         return;
       }
       setData(json);
       setState("done");
     } catch {
+      setErrorMsg("Couldn't generate a rewrite. Try again in a moment.");
       setState("error");
     }
   };
@@ -47,7 +50,7 @@ export default function BulletRewritePreview({ resumeText, jobDescription }) {
       </h3>
 
       {state === "loading" && <p className="bullet-loading">Finding your weakest bullet…</p>}
-      {state === "error" && <p className="bullet-loading">Couldn't generate a rewrite. Try again in a moment.</p>}
+      {state === "error" && <p className="bullet-loading">{errorMsg}</p>}
 
       {state === "done" && data && (
         <div className="bullet-compare">

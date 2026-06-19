@@ -104,6 +104,11 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const err = await response.text();
       console.error("Gemini error:", err);
+      if (response.status === 429) {
+        return res.status(429).json({
+          error: "You're sending requests too fast. Wait a few seconds and try again.",
+        });
+      }
       return res.status(500).json({ error: "Failed to get a response. Please try again." });
     }
 

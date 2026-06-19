@@ -4,6 +4,7 @@ export default function FullRewriteDrawer({ resumeText, jobDescription, onClose 
   const [state, setState] = useState("loading"); // loading | done | error
   const [data, setData] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -19,12 +20,14 @@ export default function FullRewriteDrawer({ resumeText, jobDescription, onClose 
         });
         const json = await res.json();
         if (!res.ok) {
+          setErrorMsg(json?.error || "Couldn't generate the rewrite. Please try again.");
           setState("error");
           return;
         }
         setData(json);
         setState("done");
       } catch {
+        setErrorMsg("Couldn't generate the rewrite. Please try again.");
         setState("error");
       }
     };
@@ -63,7 +66,7 @@ export default function FullRewriteDrawer({ resumeText, jobDescription, onClose 
           )}
 
           {state === "error" && (
-            <p className="field-error drawer-error">Couldn't generate the rewrite. Please try again.</p>
+            <p className="field-error drawer-error">{errorMsg}</p>
           )}
 
           {state === "done" && data && (

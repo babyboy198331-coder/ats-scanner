@@ -76,6 +76,11 @@ Keep "summaryOfChanges" to 3-5 short, concrete bullets (e.g. "Added measurable i
     if (!response.ok) {
       const err = await response.text();
       console.error("Gemini error:", err);
+      if (response.status === 429) {
+        return res.status(429).json({
+          error: "You're sending requests too fast. Wait a few seconds and try again.",
+        });
+      }
       return res.status(500).json({ error: "Failed to generate resume rewrite." });
     }
 

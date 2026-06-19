@@ -65,6 +65,11 @@ Suggestions should be actionable and specific to this resume/JD pair.
     if (!response.ok) {
       const err = await response.text();
       console.error("Gemini error:", err);
+      if (response.status === 429) {
+        return res.status(429).json({
+          error: "You're sending requests too fast. Wait a few seconds and try again.",
+        });
+      }
       return res.status(500).json({ error: "Failed to analyze resume. Please try again." });
     }
 
