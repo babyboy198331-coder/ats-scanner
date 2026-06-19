@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import FixChatDrawer from "./FixChatDrawer";
+import BulletRewritePreview from "./BulletRewritePreview";
+import FullRewriteDrawer from "./FullRewriteDrawer";
 
 function ScoreRing({ score }) {
   const radius = 54;
@@ -83,6 +85,7 @@ function SuggestionList({ items, onFix }) {
 export default function ResultsView({ result, inputs, onReset }) {
   const { score, summary, matchedKeywords, missingKeywords, formatIssues, suggestions } = result;
   const [activeIssue, setActiveIssue] = useState(null);
+  const [showRewrite, setShowRewrite] = useState(false);
 
   const openFix = (issueType) => (issueText) => setActiveIssue({ issueType, issueText });
   const closeFix = () => setActiveIssue(null);
@@ -142,6 +145,25 @@ export default function ResultsView({ result, inputs, onReset }) {
           </h3>
           <SuggestionList items={suggestions} onFix={openFix("suggestion")} />
         </div>
+
+        {/* AI Bullet Rewrite */}
+        {inputs && (
+          <BulletRewritePreview resumeText={inputs.resumeText} jobDescription={inputs.jobDescription} />
+        )}
+
+        {/* Full AI Resume Rewrite */}
+        <div className="result-card full-rewrite-card">
+          <h3>
+            <span className="dot dot-green" />
+            Full AI Resume Rewrite
+          </h3>
+          <p className="bullet-intro">
+            Generate a complete, ATS-optimized rewrite of your entire resume, tailored to this job.
+          </p>
+          <button className="bullet-cta-btn" onClick={() => setShowRewrite(true)}>
+            ✨ Generate full rewrite
+          </button>
+        </div>
       </div>
 
       {activeIssue && inputs && (
@@ -151,6 +173,14 @@ export default function ResultsView({ result, inputs, onReset }) {
           resumeText={inputs.resumeText}
           jobDescription={inputs.jobDescription}
           onClose={closeFix}
+        />
+      )}
+
+      {showRewrite && inputs && (
+        <FullRewriteDrawer
+          resumeText={inputs.resumeText}
+          jobDescription={inputs.jobDescription}
+          onClose={() => setShowRewrite(false)}
         />
       )}
     </div>

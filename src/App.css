@@ -408,6 +408,11 @@ body {
   grid-column: span 2;
 }
 
+.bullet-rewrite-card,
+.full-rewrite-card {
+  grid-column: span 2;
+}
+
 .dot {
   width: 7px;
   height: 7px;
@@ -464,7 +469,9 @@ body {
     grid-row: span 1;
     grid-column: span 2;
   }
-  .suggestions-card {
+  .suggestions-card,
+  .bullet-rewrite-card,
+  .full-rewrite-card {
     grid-column: span 2;
   }
 }
@@ -474,7 +481,9 @@ body {
     grid-template-columns: 1fr;
   }
   .score-card,
-  .suggestions-card {
+  .suggestions-card,
+  .bullet-rewrite-card,
+  .full-rewrite-card {
     grid-column: span 1;
   }
 }
@@ -533,6 +542,117 @@ body {
   background: var(--accent);
   color: #fff;
   transform: translateY(-1px);
+}
+
+/* ---- BULLET REWRITE PREVIEW ---- */
+.bullet-intro {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.bullet-loading {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.bullet-cta-btn {
+  align-self: flex-start;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+.bullet-cta-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.bullet-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bullet-block {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.bullet-block p {
+  margin: 4px 0 0;
+  color: var(--text-primary);
+}
+
+.bullet-before {
+  border-color: var(--red);
+  background: var(--red-bg);
+}
+
+.bullet-after {
+  border-color: var(--green);
+  background: var(--green-bg);
+}
+
+.bullet-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.bullet-reason {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ---- FULL RESUME REWRITE ---- */
+.rewrite-drawer-wide {
+  width: min(680px, 100vw);
+}
+
+.rewrite-changes {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.rewrite-changes ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.rewrite-changes li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.rewrite-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
 }
 
 /* ---- FIX CHAT DRAWER ---- */
