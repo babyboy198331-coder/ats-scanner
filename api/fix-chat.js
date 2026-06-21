@@ -1,5 +1,5 @@
 import { getClientIp, checkAndIncrementRateLimit } from "./_lib/rateLimit.js";
-import { fetchGeminiWithRetry } from "./_lib/geminiFetch.js";
+import { fetchGroqWithRetry } from "./_lib/groqFetch.js";
 
 const DAILY_LIMIT = 40; // chat turns per IP per day
 const MAX_HISTORY = 20; // safety cap on conversation length
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "The last message must be from the user." });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured." });
   }
@@ -79,25 +79,24 @@ export default async function handler(req, res) {
 
   const systemPrompt = buildSystemPrompt({ issueType, issueText, resumeText, jobDescription });
 
-  const contents = trimmedMessages.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
+  const chatMessages = [
+    { role: "system", content: systemPrompt },
+    ...trimmedMessages.map((m) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: m.content,
+    })),
+  ];
 
   try {
-    const response = await fetchGeminiWithRetry(apiKey, {
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 1024,
-        thinkingConfig: { thinkingBudget: 0 },
-      },
+    const response = await fetchGroqWithRetry(apiKey, {
+      messages: chatMessages,
+      temperature: 0.4,
+      max_tokens: 1024,
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("Gemini error:", err);
+      console.error("Groq error:", err);
       if (response.status === 429) {
         return res.status(429).json({
           error: "You're sending requests too fast. Wait a few seconds and try again.",
@@ -107,12 +106,12 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const candidate = data.candidates?.[0];
-    const reply = candidate?.content?.parts?.[0]?.text?.trim();
-    const finishReason = candidate?.finishReason;
+    const choice = data.choices?.[0];
+    const reply = choice?.message?.content?.trim();
+    const finishReason = choice?.finish_reason;
 
     if (!reply) {
-      console.error("Gemini returned no content. finishReason:", finishReason);
+      console.error("Groq returned no content. finishReason:", finishReason);
       return res.status(500).json({ error: "Failed to get a response. Please try again." });
     }
 

@@ -1,5 +1,5 @@
 import { getClientIp, checkAndIncrementRateLimit } from "./_lib/rateLimit.js";
-import { fetchGeminiWithRetry } from "./_lib/geminiFetch.js";
+import { fetchGroqWithRetry } from "./_lib/groqFetch.js";
 
 // Pick one weak bullet from the resume and rewrite it, tailored to the job
 // description. Cheap, single-bullet output, so a generous per-IP ceiling.
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Resume and job description are required." });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured." });
   }
@@ -56,19 +56,16 @@ Pick only ONE bullet — the one with the most room for improvement. Keep the re
 `;
 
   try {
-    const response = await fetchGeminiWithRetry(apiKey, {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-        responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
-      },
+    const response = await fetchGroqWithRetry(apiKey, {
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_tokens: 1024,
+      response_format: { type: "json_object" },
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("Gemini error:", err);
+      console.error("Groq error:", err);
       if (response.status === 429) {
         return res.status(429).json({
           error: "You're sending requests too fast. Wait a few seconds and try again.",
@@ -78,8 +75,8 @@ Pick only ONE bullet — the one with the most room for improvement. Keep the re
     }
 
     const data = await response.json();
-    const candidate = data.candidates?.[0];
-    const raw = candidate?.content?.parts?.[0]?.text || "";
+    const choice = data.choices?.[0];
+    const raw = choice?.message?.content || "";
 
     if (!raw) {
       return res.status(500).json({ error: "Failed to generate rewrite example." });
