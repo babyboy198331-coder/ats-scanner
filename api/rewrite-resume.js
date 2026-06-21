@@ -1,4 +1,5 @@
 import { getClientIp, checkAndIncrementRateLimit } from "./_lib/rateLimit.js";
+import { fetchGeminiWithRetry } from "./_lib/geminiFetch.js";
 
 // Full resume rewrite tailored to the job description. Lower ceiling than
 // the lightweight endpoints since this generates a lot more text.
@@ -56,22 +57,15 @@ Keep "summaryOfChanges" to 3-5 short, concrete bullets (e.g. "Added measurable i
 `;
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 4096,
-            responseMimeType: "application/json",
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        }),
-      }
-    );
+    const response = await fetchGeminiWithRetry(apiKey, {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 4096,
+        responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    });
 
     if (!response.ok) {
       const err = await response.text();

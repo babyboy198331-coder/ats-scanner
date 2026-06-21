@@ -1,4 +1,5 @@
 import { getClientIp, checkAndIncrementRateLimit } from "./_lib/rateLimit.js";
+import { fetchGeminiWithRetry } from "./_lib/geminiFetch.js";
 
 const DAILY_LIMIT = 40; // chat turns per IP per day
 const MAX_HISTORY = 20; // safety cap on conversation length
@@ -84,22 +85,15 @@ export default async function handler(req, res) {
   }));
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents,
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 1024,
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        }),
-      }
-    );
+    const response = await fetchGeminiWithRetry(apiKey, {
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents,
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 1024,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    });
 
     if (!response.ok) {
       const err = await response.text();
